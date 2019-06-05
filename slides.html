@@ -4,23 +4,149 @@
         <title>Slides</title>
 
         <style>
-          .slide-number {
-            font-size: 40px;
-          }
+            body {
+                background: grey;
+            }
+            code {
+                background: #ddd;
+            }
+            .slide-number {
+              font-size: 40px;
+            }
+            .italic {
+              font-style: italic;
+            }
+            .main {
+                background: white;
+                width: 90%;
+                margin: auto;
+                margin-bottom: 50px;
+                padding: 20px;
+                padding-top: 10px;
+            }
+            #jump {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 30px;
+                text-align: right;
+            }
         </style>
         <script src="https://unpkg.com/mithril@next/mithril.js"></script>
         <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
     </head>
 
     <body>
-        <div id="slide">?</div>
-        <input id="jump" />
-        <div class="status"></div>
+        <div class="main">
+            <div id="slide">?</div>
+            <div style="float:right;position:relative">
+                <input id="jump" />
+            </div>
+            <div class="status" style="display:none"></div>
+        </div>
         <script>
+            function logk(k, v) {
+                console.log(k, v);
+                return v;
+            }
+            function renderBody(line) {
+                if (Array.isArray(line)) {
+                    return m('ul', line.map(item => m('li', renderBody(item))));
+                }
+                if (line[0] === '"') {
+                    return m('p.italic', line);
+                }
+                if (typeof line === 'string') {
+                    const subLines = line.split('`');
+                    if (subLines.length >= 2) {
+                        return m('p', line
+                            .replace(new RegExp("`[^`]*`", 'g'), '<split>$&<split>')
+                            .split('<split>')
+                            .map(subLine => subLine[0] === '`' ?
+                                m('code', subLine.replace(new RegExp('`', 'g'), '')) : logk('sb', subLine)))
+                    }
+                }
+                if (typeof line === 'object') {
+                    return line;
+                }
+                return m('p', line);
+            }
+            function a(href) {
+                return m('a', { href }, href);
+            }
+            function ref([title, url]) {
+                return m('span', title, ' ', a(url))
+            }
             const slides = [
-                m('div', 'first'),
-                m('div', 'second'),
-            ];
+                ['From Vue to Mithril', [
+                    m('p', 'Presented by ', m('b', 'Robin Chew'), ' (robin.com.au)'),
+                    [
+                        ['Meetup talk', 'https://www.meetup.com/Perth-Django-Users-Group/events/261654852/'],
+                    ].map(ref),
+                    'Code',
+                    [
+                        ['Vue code', 'https://github.com/mattharley/pdpdmeetup/blob/mithril/talks/templates/home-talks.html'],
+                        ['Mithril code', 'https://github.com/mattharley/pdpdmeetup/blob/mithril/talks/templates/home-talks-mithril.html'],
+                    ].map(ref),
+                    'References',
+                    [
+                        ['Mithril', 'https://mithril.js.org'],
+                        ['Mithril Community', 'https://gitter.im/mithriljs/mithril.js'],
+                        ['Leo Horie\s 2014 blog', 'https://lhorie.github.io/mithril-blog/'],
+                        ['How I use Mithril (James Forbes)', 'https://james-forbes.com/#!/posts/how-i-use-mithril'],
+                        ['Meiosis (State Management pattern)', 'http://meiosis.js.org/'],
+                        ['JS Sandbox', 'https://flems.io/'],
+                    ].map(ref),
+                ]],
+                ['JavaScript Terms', [
+                    'If I mention `objects` in the context of JS, I mean `object-literals`, which is like a `dictionary` in Python',
+                    'If I mean `class-based objects` I will explicitly say so.',
+                ]],
+                ['Let\'s try to do some live coding', [
+                    'I will try to do a direct translation of existing Vue code to Mithril, and explain the pro/cons/differences along the way.'
+                ]],
+                ['No Separation of Template code and JavaScript code', [
+                    [
+                        m('span',
+                            'Discourage use of special template language. You can use JSX if you must. ',
+                            a('https://mithril.js.org/jsx.html')),
+                        'No guessing how template code pass information to and from javascript code.',
+                        'No need to ask what the `:` before `href` means or what `this` refers to.',
+                        m('span', 'JavaScript: The Good Parts (Douglas Crockford) ',
+                            a('https://www.youtube.com/watch?v=_DKkVvOt6dk')),
+                    ],
+                ]],
+                ['How do you build custom components like <el-tabs>?', [
+                    [
+                        'Build out the HTML with hyperscript.',
+                        'Then break the code out into a function for reuse.',
+                        'You could also break out into a mithril component which is just an object-literal',
+                        m('p', 'Apply third-party library in the ',
+                           m('code', 'oncreate'),
+                           ' method to make fancy animation'),
+                    ],
+                ]],
+                ['JavaScript already has \'for\' loops and \'if\' statements', [
+                    [
+                        'Why reinvent them in a templating language? (Same argument against Less and SASS)',
+                        'Avoid the magic, just code in JavaScript.',
+                    ]
+                ]],
+                ['More obvious errors', [
+                    "Because it's just JavaScript.",
+                    [
+                        'Mistakes in the Vue template code may not be obvious.',
+                        'Purposely make mistakes inside the value of `v-for`, and you will get silent errors or unhelpful tracebacks.',
+                    ],
+                ]],
+                ['Let\'s not just filter by Robin', [
+                    'You are programming in javascript, you can pass functions as arguments',
+                ]],
+                ['End', [
+                    'Questions?',
+                ]],
+            ].map(([head, lines]) => m('div', m('h1', head), lines.map(line => renderBody(line))));
+
             function renderSlideNumber(slideNumber) {
                 m.render(
                     document.getElementById('slide'),
