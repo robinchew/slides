@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Slides</title>
+
+        <style>
+          .slide-number {
+            font-size: 40px;
+          }
+        </style>
+        <script src="https://unpkg.com/mithril@next/mithril.js"></script>
+        <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    </head>
+
+    <body>
+        <div id="slide">?</div>
+        <input id="jump" />
+        <div class="status"></div>
+        <script>
+            const slides = [
+                m('div', 'first'),
+                m('div', 'second'),
+            ];
+            function renderSlideNumber(slideNumber) {
+                m.render(
+                    document.getElementById('slide'),
+                    m('div', slides[slideNumber],
+                        `${slideNumber + 1}/${slides.length}`));
+            }
+            $(function() {
+              // Subscribe to slide changes
+              $('.status').text('Connecting...');
+              var ws = new WebSocket('ws://' + document.location.host + '/slides-subscribe');
+              ws.onopen = function() {
+                $('.status').text('Connected');
+              };
+              ws.onclose = function() {
+                $('.status').text('Lost connection');
+              };
+              ws.onmessage = function(e) {
+                var slideNumber = parseInt(e.data);
+                renderSlideNumber(slideNumber);
+              };
+              // Increment
+              $(document.body).keyup(function(e) {
+                  if ($(e.target).is('input')) {
+                    return;
+                  }
+                  if (e.which === 37) {
+                    $.get('/prev');
+                  }
+                  else if(e.which === 39) {
+                    $.get('/next');
+                  }
+              });
+              // Update curl instructions
+              $('.hostname').text(document.location.host);
+            });
+
+            $('#jump').keyup(e => {
+                if (e.target.value) {
+                    $.get(`/jump?${e.target.value-1}`)
+                }
+            })
+        </script>
+    </body>
+<html>
